@@ -16,7 +16,7 @@ public class CollectionUtils {
     }
 
     /**
-     * Creates a reverse list iterator.
+     * Creates a reverse iterator based on given list iterator.
      * <br/>
      * This is a version of a {@link #reverse(Iterator)} with less memory consumption.
      * <br/>
