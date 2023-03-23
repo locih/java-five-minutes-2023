@@ -1,5 +1,5 @@
-import java.util.Iterator;
-import java.util.ListIterator;
+import java.util.*;
+import java.util.function.BiFunction;
 
 public class CollectionUtils {
 
@@ -12,7 +12,9 @@ public class CollectionUtils {
      * Note that after calling this method original iterator is invalidated.
      */
     public static <T> Iterator<T> reverse(Iterator<T> iterator) {
-        return null;
+        Deque<T> deque = new ArrayDeque<>();
+        iterator.forEachRemaining(deque::addFirst);
+        return deque.iterator();
     }
 
     /**
@@ -23,7 +25,20 @@ public class CollectionUtils {
      * Note that after calling this method original iterator is invalidated.
      */
     public static <T> Iterator<T> listReverse(ListIterator<T> iterator) {
-        return null;
+        iterator.forEachRemaining(__ -> {});
+        class ReverseIterator implements Iterator<T> {
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasPrevious();
+            }
+
+            @Override
+            public T next() {
+                return iterator.previous();
+            }
+        }
+        return new ReverseIterator();
     }
 
     /**
@@ -33,7 +48,38 @@ public class CollectionUtils {
      */
     @SafeVarargs
     public static <T> Iterator<T> append(Iterator<T> first, Iterator<T>... rest) {
-        return null;
+        List<Iterator<T>> iterators = new ArrayList<>();
+        if (first.hasNext()) {
+            iterators.add(first);
+        }
+        for (Iterator<T> iterator : rest) {
+            if (iterator.hasNext()) {
+                iterators.add(iterator);
+            }
+        }
+
+        class IteratorOfIterators implements Iterator<T> {
+
+            int nIterator;
+
+            @Override
+            public boolean hasNext() {
+                if (nIterator >= iterators.size()) return false;
+                Iterator<T> cur = iterators.get(nIterator);
+                return cur.hasNext();
+            }
+
+            @Override
+            public T next() {
+                Iterator<T> cur = iterators.get(nIterator);
+                T el = cur.next();
+                if (!cur.hasNext()) {
+                    nIterator++;
+                }
+                return el;
+            }
+        }
+        return new IteratorOfIterators();
     }
 
     /*
@@ -56,4 +102,20 @@ public class CollectionUtils {
 
     Подсказка: java.util.function для ковертера
      */
+    public static<T, V, U> Collection<U> zip(Collection<T> first,
+                                             Collection<V> second,
+                                             BiFunction<T, V, U> converter) {
+        if (first.size() != second.size()) {
+            throw new IllegalArgumentException("Expected collections of a same size");
+        }
+        List<U> result = new ArrayList<>();
+        Iterator<T> firstIterator = first.iterator();
+        Iterator<V> secondIterator = second.iterator();
+        while (firstIterator.hasNext()) {
+            T el1 = firstIterator.next();
+            V el2 = secondIterator.next();
+            result.add(converter.apply(el1, el2));
+        }
+        return result;
+    }
 }
